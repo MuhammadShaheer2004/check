@@ -1,24 +1,26 @@
 import streamlit as st
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from transformers import NVLM_D
 import torch
+import os
 
-# Set up the model and tokenizer
-model_name = "rhymes-ai/Aria"
-model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# Load the NVLM-D model with the Hugging Face token
+model_name = "nvidia/NVLM-D-72B"
+hf_token = os.getenv("HF_TOKEN")  # Get the token from environment variables
 
-# Set up the pipeline
-text_generation = pipeline("text-generation", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
+model = NVLM_D.from_pretrained(model_name, trust_remote_code=True, use_auth_token=hf_token)
 
-# Streamlit app
-st.title("Text Generation with Aria")
+# Streamlit app title
+st.title("Text Generation with NVLM-D")
 
-# Input for user
+# User input
 user_input = st.text_area("Enter your prompt:", "Once upon a time")
 
 if st.button("Generate Text"):
     with st.spinner("Generating..."):
-        result = text_generation(user_input, max_length=100, num_return_sequences=1)
-        generated_text = result[0]['generated_text']
+        # Generate text
+        inputs = model.tokenizer(user_input, return_tensors="pt")
+        with torch.no_grad():
+            outputs = model.generate(**inputs, max_length=100)
+        generated_text = model.tokenizer.decode(outputs[0], skip_special_tokens=True)
         st.write("Generated Text:")
         st.write(generated_text)
