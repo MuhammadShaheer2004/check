@@ -2,7 +2,8 @@
 import streamlit as st
 from transformers import pipeline
 from PIL import Image
-
+API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
+headers = {"Hugging_Face": "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"}
 # Initialize the image-to-text pipeline
 pipe = pipeline("image-to-text", model="paragon-AI/blip2-image-to-text")
 
