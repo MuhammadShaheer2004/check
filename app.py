@@ -1,27 +1,24 @@
-# app.py
 import streamlit as st
-from transformers import pipeline
-from PIL import Image
-API_URL = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base"
-headers = {"Hugging_Face": "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"}
-# Initialize the image-to-text pipeline
-pipe = pipeline("image-to-text", model="paragon-AI/blip2-image-to-text")
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
 
-# Set up the Streamlit app
-st.title("Image Captioning App")
-st.write("Upload an image to generate a caption.")
+# Set up the model and tokenizer
+model_name = "rhymes-ai/Aria"
+model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Upload image
-uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "png", "jpeg"])
+# Set up the pipeline
+text_generation = pipeline("text-generation", model=model, tokenizer=tokenizer, device=0 if torch.cuda.is_available() else -1)
 
-if uploaded_file is not None:
-    # Open and display the image
-    image = Image.open(uploaded_file)
-    st.image(image, caption='Uploaded Image', use_column_width=True)
-    
-    # Generate the caption
-    with st.spinner("Generating caption..."):
-        result = pipe(image)
-        caption = result[0]['generated_text']  # Adjust according to the output structure
-        st.write("Generated Caption:")
-        st.write(caption)
+# Streamlit app
+st.title("Text Generation with Aria")
+
+# Input for user
+user_input = st.text_area("Enter your prompt:", "Once upon a time")
+
+if st.button("Generate Text"):
+    with st.spinner("Generating..."):
+        result = text_generation(user_input, max_length=100, num_return_sequences=1)
+        generated_text = result[0]['generated_text']
+        st.write("Generated Text:")
+        st.write(generated_text)
