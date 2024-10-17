@@ -1,26 +1,21 @@
 import streamlit as st
-from transformers import NVLM_D
-import torch
-import os
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-# Load the NVLM-D model with the Hugging Face token
+# Load model and tokenizer
 model_name = "nvidia/NVLM-D-72B"
-hf_token = os.getenv("HF_TOKEN")  # Get the token from environment variables
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(model_name, trust_remote_code=True)
 
-model = NVLM_D.from_pretrained(model_name, trust_remote_code=True, use_auth_token=hf_token)
+# Streamlit interface
+st.title("NVLM Model Interface")
+user_input = st.text_input("Enter your text prompt:")
 
-# Streamlit app title
-st.title("Text Generation with NVLM-D")
-
-# User input
-user_input = st.text_area("Enter your prompt:", "Once upon a time")
-
-if st.button("Generate Text"):
-    with st.spinner("Generating..."):
-        # Generate text
-        inputs = model.tokenizer(user_input, return_tensors="pt")
-        with torch.no_grad():
-            outputs = model.generate(**inputs, max_length=100)
-        generated_text = model.tokenizer.decode(outputs[0], skip_special_tokens=True)
-        st.write("Generated Text:")
-        st.write(generated_text)
+if st.button("Generate Response"):
+    if user_input:
+        inputs = tokenizer(user_input, return_tensors="pt")
+        outputs = model.generate(**inputs)
+        response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        st.write("Generated Response:")
+        st.write(response)
+    else:
+        st.warning("Please enter a prompt.")
